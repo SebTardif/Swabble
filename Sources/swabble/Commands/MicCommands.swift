@@ -30,7 +30,9 @@ struct MicList: ParsableCommand {
             position: .unspecified,
         )
         let devices = session.devices
-        if devices.isEmpty { print("no audio inputs found"); return }
+        if devices.isEmpty {
+            print("no audio inputs found"); return
+        }
         for (idx, device) in devices.enumerated() {
             print("[\(idx)] \(device.localizedName)")
         }
@@ -49,8 +51,12 @@ struct MicSet: ParsableCommand {
     init() {}
     init(parsed: ParsedValues) {
         self.init()
-        if let value = parsed.positional.first, let intVal = Int(value) { index = intVal }
-        if let cfg = parsed.options["configPath"]?.last { configPath = cfg }
+        if let value = parsed.positional.first, let intVal = Int(value) {
+            index = intVal
+        }
+        if let cfg = parsed.options["configPath"]?.last {
+            configPath = cfg
+        }
     }
 
     mutating func run() async throws {

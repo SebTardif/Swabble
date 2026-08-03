@@ -25,12 +25,24 @@ struct TranscribeCommand: ParsableCommand {
 
     init(parsed: ParsedValues) {
         self.init()
-        if let positional = parsed.positional.first { inputFile = positional }
-        if let loc = parsed.options["locale"]?.last { locale = loc }
-        if parsed.flags.contains("censor") { censor = true }
-        if let out = parsed.options["outputFile"]?.last { outputFile = out }
-        if let fmt = parsed.options["format"]?.last { format = fmt }
-        if let len = parsed.options["maxLength"]?.last, let intVal = Int(len) { maxLength = intVal }
+        if let positional = parsed.positional.first {
+            inputFile = positional
+        }
+        if let loc = parsed.options["locale"]?.last {
+            locale = loc
+        }
+        if parsed.flags.contains("censor") {
+            censor = true
+        }
+        if let out = parsed.options["outputFile"]?.last {
+            outputFile = out
+        }
+        if let fmt = parsed.options["format"]?.last {
+            format = fmt
+        }
+        if let len = parsed.options["maxLength"]?.last, let intVal = Int(len) {
+            maxLength = intVal
+        }
     }
 
     mutating func run() async throws {

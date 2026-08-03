@@ -14,7 +14,9 @@ struct DoctorCommand: ParsableCommand {
     init() {}
     init(parsed: ParsedValues) {
         self.init()
-        if let cfg = parsed.options["configPath"]?.last { configPath = cfg }
+        if let cfg = parsed.options["configPath"]?.last {
+            configPath = cfg
+        }
     }
 
     mutating func run() async throws {

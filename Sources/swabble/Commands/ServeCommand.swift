@@ -18,8 +18,12 @@ struct ServeCommand: ParsableCommand {
 
     init(parsed: ParsedValues) {
         self.init()
-        if parsed.flags.contains("noWake") { noWake = true }
-        if let cfg = parsed.options["configPath"]?.last { configPath = cfg }
+        if parsed.flags.contains("noWake") {
+            noWake = true
+        }
+        if let cfg = parsed.options["configPath"]?.last {
+            configPath = cfg
+        }
     }
 
     mutating func run() async throws {
@@ -76,7 +80,9 @@ struct ServeCommand: ParsableCommand {
 
     private static func matchesWake(text: String, cfg: SwabbleConfig) -> Bool {
         let lowered = text.lowercased()
-        if lowered.contains(cfg.wake.word.lowercased()) { return true }
+        if lowered.contains(cfg.wake.word.lowercased()) {
+            return true
+        }
         return cfg.wake.aliases.contains(where: { lowered.contains($0.lowercased()) })
     }
 

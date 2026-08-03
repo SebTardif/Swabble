@@ -23,7 +23,9 @@ struct StatusCommand: ParsableCommand {
     init() {}
     init(parsed: ParsedValues) {
         self.init()
-        if let cfg = parsed.options["configPath"]?.last { configPath = cfg }
+        if let cfg = parsed.options["configPath"]?.last {
+            configPath = cfg
+        }
         jsonOutput = parsed.flags.contains("jsonOutput")
     }
 

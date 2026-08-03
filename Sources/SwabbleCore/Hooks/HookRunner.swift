@@ -18,7 +18,9 @@ private actor HookProcessMonitor {
     }
 
     func waitForOutcome() async -> HookProcessOutcome {
-        if let outcome { return outcome }
+        if let outcome {
+            return outcome
+        }
         return await withCheckedContinuation { waiter = $0 }
     }
 }
