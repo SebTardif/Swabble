@@ -8,6 +8,9 @@ on:
 jobs:
   build-and-test:
     runs-on: macos-26
+    env:
+      SWIFTFORMAT_VERSION: "0.62.1"
+      SWIFTFORMAT_SHA256: "7cb1cb1fae04932047c7015441c543848e8e60e1572d808d080e0a1f1661114a"
     defaults:
       run:
         shell: bash
@@ -39,11 +42,21 @@ jobs:
 
       - name: Install tooling
         run: |
+          set -euo pipefail
           brew update
-          brew install swiftlint swiftformat
+          brew install swiftlint
+          curl --fail --location --retry 3 \
+            "https://github.com/nicklockwood/SwiftFormat/releases/download/${SWIFTFORMAT_VERSION}/swiftformat.zip" \
+            --output "$RUNNER_TEMP/swiftformat.zip"
+          echo "${SWIFTFORMAT_SHA256}  $RUNNER_TEMP/swiftformat.zip" | shasum -a 256 --check
+          mkdir -p "$RUNNER_TEMP/swiftformat-bin"
+          ditto -x -k "$RUNNER_TEMP/swiftformat.zip" "$RUNNER_TEMP/swiftformat-bin"
+          chmod +x "$RUNNER_TEMP/swiftformat-bin/swiftformat"
+          echo "$RUNNER_TEMP/swiftformat-bin" >> "$GITHUB_PATH"
 
       - name: Format check
         run: |
+          test "$(swiftformat --version)" = "$SWIFTFORMAT_VERSION"
           ./scripts/format.sh
           git diff --exit-code
 
