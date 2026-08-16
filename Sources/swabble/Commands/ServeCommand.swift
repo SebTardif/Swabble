@@ -48,26 +48,28 @@ struct ServeCommand: ParsableCommand {
                 localeIdentifier: cfg.speech.localeIdentifier,
                 etiquette: cfg.speech.etiquetteReplacements,
             )
-            for try await seg in stream {
-                if cfg.wake.enabled {
-                    guard Self.matchesWake(text: seg.text, cfg: cfg) else { continue }
-                }
-                let stripped = Self.stripWake(text: seg.text, cfg: cfg)
-                let job = HookJob(text: stripped, timestamp: Date())
-                let didRun = try await runner.run(job: job)
-                if didRun, cfg.transcripts.enabled {
-                    do {
-                        try await transcripts.append(text: stripped)
-                    } catch {
-                        logger.warn("could not persist transcript: \(error)")
+            try await withPipelineStop(stop: { await pipeline.stop() }, perform: {
+                for try await seg in stream {
+                    if cfg.wake.enabled {
+                        guard Self.matchesWake(text: seg.text, cfg: cfg) else { continue }
+                    }
+                    let stripped = Self.stripWake(text: seg.text, cfg: cfg)
+                    let job = HookJob(text: stripped, timestamp: Date())
+                    let didRun = try await runner.run(job: job)
+                    if didRun, cfg.transcripts.enabled {
+                        do {
+                            try await transcripts.append(text: stripped)
+                        } catch {
+                            logger.warn("could not persist transcript: \(error)")
+                        }
+                    }
+                    if seg.isFinal {
+                        logger.info("final: \(stripped)")
+                    } else {
+                        logger.debug("partial: \(stripped)")
                     }
                 }
-                if seg.isFinal {
-                    logger.info("final: \(stripped)")
-                } else {
-                    logger.debug("partial: \(stripped)")
-                }
-            }
+            })
         } catch {
             logger.error("serve error: \(error)")
             throw error

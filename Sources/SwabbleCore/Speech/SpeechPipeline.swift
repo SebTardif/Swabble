@@ -23,6 +23,10 @@ public actor SpeechPipeline {
     private var analyzer: SpeechAnalyzer?
     private var inputContinuation: AsyncStream<AnalyzerInput>.Continuation?
     private var resultTask: Task<Void, Never>?
+    private var tapMailbox: NewestOneMailbox<UnsafeBuffer>?
+    private var tapTask: Task<Void, Never>?
+    private var tapInstalled = false
+    private var stopped = false
     private let converter = BufferConverter()
 
     public init() {}
@@ -47,23 +51,15 @@ public actor SpeechPipeline {
         analyzer = SpeechAnalyzer(modules: [transcriberModule])
         let (stream, continuation) = AsyncStream<AnalyzerInput>.makeStream()
         inputContinuation = continuation
-
-        let inputNode = engine.inputNode
-        let inputFormat = inputNode.outputFormat(forBus: 0)
-        inputNode.removeTap(onBus: 0)
-        inputNode.installTap(onBus: 0, bufferSize: 2048, format: inputFormat) { [weak self] buffer, _ in
-            guard let self, let copy = Self.copy(buffer: buffer) else { return }
-            let boxed = UnsafeBuffer(buffer: copy)
-            Task { await self.handleBuffer(boxed.buffer, targetFormat: analyzerFormat) }
-        }
+        let inputNode = installBufferedTap(targetFormat: analyzerFormat)
 
         engine.prepare()
         do {
             try engine.start()
             try await analyzer?.start(inputSequence: stream)
         } catch {
+            tearDownTap(inputNode: inputNode)
             inputContinuation?.finish()
-            inputNode.removeTap(onBus: 0)
             engine.stop()
             throw error
         }
@@ -91,11 +87,45 @@ public actor SpeechPipeline {
     }
 
     public func stop() async {
+        guard !stopped else { return }
+        stopped = true
         resultTask?.cancel()
+        tearDownTap(inputNode: engine.inputNode)
         inputContinuation?.finish()
-        engine.inputNode.removeTap(onBus: 0)
         engine.stop()
         try? await analyzer?.finalizeAndFinishThroughEndOfInput()
+    }
+
+    private func installBufferedTap(targetFormat: AVAudioFormat) -> AVAudioInputNode {
+        stopped = false
+        let mailbox = NewestOneMailbox<UnsafeBuffer>()
+        tapMailbox = mailbox
+        tapTask = Task {
+            for await boxed in mailbox.stream {
+                await self.handleBuffer(boxed.buffer, targetFormat: targetFormat)
+            }
+        }
+
+        let inputNode = engine.inputNode
+        let inputFormat = inputNode.outputFormat(forBus: 0)
+        inputNode.removeTap(onBus: 0)
+        inputNode.installTap(onBus: 0, bufferSize: 2048, format: inputFormat) { buffer, _ in
+            guard let copy = Self.copy(buffer: buffer) else { return }
+            mailbox.yield(UnsafeBuffer(buffer: copy))
+        }
+        tapInstalled = true
+        return inputNode
+    }
+
+    private func tearDownTap(inputNode: AVAudioInputNode) {
+        tapMailbox?.finish()
+        tapMailbox = nil
+        tapTask?.cancel()
+        tapTask = nil
+        if tapInstalled {
+            inputNode.removeTap(onBus: 0)
+            tapInstalled = false
+        }
     }
 
     private func handleBuffer(_ buffer: AVAudioPCMBuffer, targetFormat: AVAudioFormat) async {
