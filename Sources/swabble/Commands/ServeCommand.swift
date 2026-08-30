@@ -27,13 +27,7 @@ struct ServeCommand: ParsableCommand {
     }
 
     mutating func run() async throws {
-        var cfg: SwabbleConfig
-        do {
-            cfg = try ConfigLoader.load(at: configURL)
-        } catch {
-            cfg = SwabbleConfig()
-            try ConfigLoader.save(cfg, at: configURL)
-        }
+        var cfg = try ConfigLoader.loadOrCreateIfMissing(at: configURL)
         if noWake {
             cfg.wake.enabled = false
         }

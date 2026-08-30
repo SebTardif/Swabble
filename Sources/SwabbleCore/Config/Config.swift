@@ -67,6 +67,16 @@ public enum ConfigLoader {
         return try JSONDecoder().decode(SwabbleConfig.self, from: data)
     }
 
+    public static func loadOrCreateIfMissing(at path: URL?) throws -> SwabbleConfig {
+        do {
+            return try load(at: path)
+        } catch ConfigError.missingConfig {
+            let config = SwabbleConfig()
+            try save(config, at: path)
+            return config
+        }
+    }
+
     public static func save(_ config: SwabbleConfig, at path: URL?) throws {
         let url = path ?? SwabbleConfig.defaultPath
         let dir = url.deletingLastPathComponent()
