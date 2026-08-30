@@ -1,5 +1,6 @@
 import Commander
 import Foundation
+import Swabble
 
 @MainActor
 struct ServiceRootCommand: ParsableCommand {
@@ -33,7 +34,7 @@ private enum LaunchdHelper {
     }
 
     static func removePlist() throws {
-        try? FileManager.default.removeItem(at: plistURL)
+        try FileSystem.removeItemIgnoringNotFound(at: plistURL)
     }
 }
 
