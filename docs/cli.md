@@ -22,6 +22,8 @@ Run `swabble --help` or `swabble <command> --help` for the current command surfa
 - `service install|uninstall|status` prints user launchd commands.
 - `start`, `stop`, and `restart` are placeholders until launchd wiring lands.
 
+`service uninstall` removes the plist before printing the bootout instruction. An already-missing plist is harmless; other removal failures are reported as errors.
+
 ## Examples
 
 ```bash

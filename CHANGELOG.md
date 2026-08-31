@@ -14,4 +14,5 @@
 - Added supported-locale validation and first-use installation for Apple Speech framework assets.
 - Copied microphone tap buffers before asynchronous processing and surfaced speech-stream failures instead of silently ending the daemon.
 - Added release-build CLI smoke coverage and regression tests for hook and local-data behavior.
+- Added docs-builder regression tests to pull-request CI using Node 26, matching the Pages build runtime. (#5, thanks @vincentkoc)
 - Pinned GitHub Actions dependencies to current immutable release commits.
