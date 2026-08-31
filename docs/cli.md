@@ -10,7 +10,7 @@ Run `swabble --help` or `swabble <command> --help` for the current command surfa
 ## Commands
 
 - `setup` writes the default config JSON and refuses to replace an existing file unless passed `--force`.
-- `serve` starts the foreground microphone loop.
+- `serve` starts the foreground microphone loop. It writes a default config only when the file is missing; a corrupt or unreadable file is reported and left unchanged.
 - `transcribe <file>` emits `txt` or `srt` file transcription.
 - `test-hook "text"` invokes the configured hook.
 - `mic list` enumerates input devices.

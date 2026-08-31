@@ -7,6 +7,7 @@ description: "The JSON config fields Swabble reads at runtime."
 
 Swabble reads `~/.config/swabble/config.json`. Use `--config /path/to/config.json` on commands that accept an alternate path.
 `swabble setup` creates the file with owner-only permissions and refuses to replace it unless passed `--force`.
+`swabble serve` writes defaults only when the file is missing. A corrupt or unreadable config is left in place and surfaced as an error.
 
 ```json
 {

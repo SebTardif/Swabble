@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Stopped `swabble serve` from replacing an existing unreadable config with defaults. Only a missing file is treated as first-run.
 - Updated Commander to 0.2.4, moved the docs build to Node 26, and refreshed the pinned checkout and Node setup actions.
 - Pinned SwiftFormat 0.62.1 in CI and applied its conditional-body formatting rules.
 - Fixed hook timeouts being reported as ordinary process exits when termination and process-wait completion raced.
