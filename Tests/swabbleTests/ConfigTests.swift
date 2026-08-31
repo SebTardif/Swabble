@@ -23,6 +23,73 @@ func configMissingThrows() {
 }
 
 @Test
+func configLoadOrCreateIfMissingWritesDefaultsWhenAbsent() throws {
+    let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".json")
+    defer { try? FileManager.default.removeItem(at: url) }
+
+    let loaded = try ConfigLoader.loadOrCreateIfMissing(at: url)
+    #expect(loaded.wake.word == "clawd")
+    #expect(FileManager.default.fileExists(atPath: url.path))
+    let reloaded = try ConfigLoader.load(at: url)
+    #expect(reloaded.wake.word == "clawd")
+}
+
+@Test
+func configLoadOrCreateIfMissingDoesNotOverwriteCorruptJSON() throws {
+    let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".json")
+    defer { try? FileManager.default.removeItem(at: url) }
+
+    let corrupt = Data("{not-json".utf8)
+    try corrupt.write(to: url)
+
+    #expect(throws: DecodingError.self) {
+        _ = try ConfigLoader.loadOrCreateIfMissing(at: url)
+    }
+    #expect(try Data(contentsOf: url) == corrupt)
+}
+
+@Test
+func configLoadOrCreateIfMissingDoesNotOverwriteUndecodableJSON() throws {
+    let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".json")
+    defer { try? FileManager.default.removeItem(at: url) }
+
+    let undecodable = Data(#"{"wake":"not-an-object"}"#.utf8)
+    try undecodable.write(to: url)
+
+    #expect(throws: DecodingError.self) {
+        _ = try ConfigLoader.loadOrCreateIfMissing(at: url)
+    }
+    #expect(try Data(contentsOf: url) == undecodable)
+}
+
+@Test
+func configLoadOrCreateIfMissingDoesNotOverwriteEmptyFile() throws {
+    let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".json")
+    defer { try? FileManager.default.removeItem(at: url) }
+
+    try Data().write(to: url)
+
+    #expect(throws: DecodingError.self) {
+        _ = try ConfigLoader.loadOrCreateIfMissing(at: url)
+    }
+    #expect(try Data(contentsOf: url).isEmpty)
+}
+
+@Test
+func configLoadOrCreateIfMissingReturnsExistingConfig() throws {
+    var cfg = SwabbleConfig()
+    cfg.wake.word = "robot"
+    let url = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".json")
+    defer { try? FileManager.default.removeItem(at: url) }
+
+    try ConfigLoader.save(cfg, at: url)
+    let before = try Data(contentsOf: url)
+    let loaded = try ConfigLoader.loadOrCreateIfMissing(at: url)
+    #expect(loaded.wake.word == "robot")
+    #expect(try Data(contentsOf: url) == before)
+}
+
+@Test
 func configSaveUsesPrivatePermissions() throws {
     let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     let url = directory.appendingPathComponent("config.json")
