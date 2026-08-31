@@ -24,6 +24,14 @@ jobs:
         with:
           path: swabble
 
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 26
+
+      - name: Test docs builder
+        run: node --test scripts/build-docs-site.test.mjs
+
       - name: Select Xcode 26.1 (prefer 26.1.1)
         run: |
           set -euo pipefail
