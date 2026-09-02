@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Honored task cancellation during hook terminate wait by sending SIGKILL and rethrowing instead of reporting a timeout.
 - Stopped `swabble serve` from replacing an existing unreadable config with defaults. Only a missing file is treated as first-run. (#10, thanks @SebTardif)
 - Surfaced launchd plist removal errors from `service uninstall` instead of printing bootout after a failed delete. (#9, thanks @SebTardif)
 - Updated Commander to 0.2.4, moved the docs build to Node 26, and refreshed the pinned checkout and Node setup actions.
