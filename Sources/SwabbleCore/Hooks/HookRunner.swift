@@ -107,7 +107,7 @@ public actor HookRunner {
         return true
     }
 
-    private func finishTimedOutProcess(_ process: Process, clock: ContinuousClock) async throws {
+    func finishTimedOutProcess(_ process: Process, clock: ContinuousClock) async throws {
         process.terminate()
         let terminationDeadline = clock.now.advanced(by: .milliseconds(100))
         do {
@@ -123,6 +123,8 @@ public actor HookRunner {
         if process.isRunning {
             _ = kill(process.processIdentifier, SIGKILL)
         }
+        // The process may exit without another suspension observing cancellation.
+        try Task.checkCancellation()
         throw HookRunnerError.timedOut
     }
 }

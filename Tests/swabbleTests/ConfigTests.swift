@@ -184,13 +184,17 @@ func hookRunnerEscalatesWhenHookIgnoresTermination() async {
 @Test
 func hookRunnerHonorsCancelDuringTerminateWait() async throws {
     let pidURL = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".pid")
-    defer { try? FileManager.default.removeItem(at: pidURL) }
+    let terminatedURL = pidURL.appendingPathExtension("terminated")
+    defer {
+        try? FileManager.default.removeItem(at: pidURL)
+        try? FileManager.default.removeItem(at: terminatedURL)
+    }
 
     var config = SwabbleConfig()
     config.hook.command = "/bin/sh"
     config.hook.args = [
         "-c",
-        "echo $$ > '\(pidURL.path)'; trap '' TERM; while :; do :; done",
+        "trap 'echo terminated > \"\(terminatedURL.path)\"' TERM; echo $$ > '\(pidURL.path)'; while :; do :; done",
         "swabble-hook",
     ]
     config.hook.minCharacters = 0
@@ -202,9 +206,9 @@ func hookRunnerHonorsCancelDuringTerminateWait() async throws {
     }
 
     let started = ContinuousClock().now
-    while !FileManager.default.fileExists(atPath: pidURL.path) {
+    while !FileManager.default.fileExists(atPath: terminatedURL.path) {
         if started.duration(to: .now) > .seconds(1) {
-            Issue.record("Hook did not start")
+            Issue.record("Hook did not receive SIGTERM")
             task.cancel()
             _ = try? await task.value
             return
@@ -233,6 +237,28 @@ func hookRunnerHonorsCancelDuringTerminateWait() async throws {
         try await Task.sleep(for: .milliseconds(10))
     }
     #expect(!stillAlive)
+}
+
+@Test
+func hookRunnerHonorsCancelWhenTerminationPollingIsSkipped() async throws {
+    let process = Process()
+    process.executableURL = URL(fileURLWithPath: "/usr/bin/true")
+    try process.run()
+    process.waitUntilExit()
+    let runner = HookRunner(config: SwabbleConfig())
+
+    let task = Task {
+        withUnsafeCurrentTask { $0?.cancel() }
+        // An exited child skips every polling sleep, so cleanup must check cancellation itself.
+        try await runner.finishTimedOutProcess(process, clock: ContinuousClock())
+    }
+    do {
+        try await task.value
+        Issue.record("Expected cancellation")
+    } catch is CancellationError {
+    } catch {
+        Issue.record("Unexpected error: \(error)")
+    }
 }
 
 @Test
