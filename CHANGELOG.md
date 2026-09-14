@@ -1,5 +1,7 @@
 # Changelog
 
+## Unreleased
+
 ## 0.1.0 - 2026-09-14
 
 **Highlights:** First public release of Swabble brings on-device speech transcription, wake-word hooks, and safer config handling on macOS 26.
