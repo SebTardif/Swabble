@@ -45,7 +45,7 @@ struct ServiceInstall: ParsableCommand {
     }
 
     mutating func run() async throws {
-        let exe = CommandLine.arguments.first ?? "/usr/local/bin/swabble"
+        let exe = absoluteExecutablePath()
         try LaunchdHelper.writePlist(executable: exe)
         print("launchctl load -w \(LaunchdHelper.plistURL.path)")
     }

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Write the resolved executable path into the launchd agent so `service install` still starts when the shell invoked a bare `swabble`.
+
 ## 0.1.0 - 2026-09-14
 
 **Highlights:** First public release of Swabble brings on-device speech transcription, wake-word hooks, and safer config handling on macOS 26.
