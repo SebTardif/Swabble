@@ -17,12 +17,20 @@ private enum LaunchdHelper {
     static let label = "com.swabble.agent"
 
     static var plistURL: URL {
-        FileManager.default
+        if let override = ProcessInfo.processInfo.environment["SWABBLE_LAUNCH_AGENTS_DIR"], !override.isEmpty {
+            return URL(fileURLWithPath: override, isDirectory: true)
+                .appendingPathComponent("\(label).plist")
+        }
+        return FileManager.default
             .homeDirectoryForCurrentUser
             .appendingPathComponent("Library/LaunchAgents/\(label).plist")
     }
 
     static func writePlist(executable: String) throws {
+        try FileManager.default.createDirectory(
+            at: plistURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true,
+        )
         let plist: [String: Any] = [
             "Label": label,
             "ProgramArguments": [executable, "serve"],

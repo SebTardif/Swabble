@@ -2,10 +2,16 @@ import Darwin
 import Foundation
 
 package nonisolated func absoluteExecutablePath() -> String {
-    guard let raw = copyExecutablePath() else {
+    absoluteExecutablePath(raw: copyExecutablePath())
+}
+
+package nonisolated func absoluteExecutablePath(raw: String?) -> String {
+    guard let raw, !raw.isEmpty else {
         return "/usr/local/bin/swabble"
     }
-    return URL(fileURLWithPath: raw).resolvingSymlinksInPath().path
+    // Keep a stable absolute symlink. Resolving it would pin launchd to a
+    // versioned target that an upgrade can delete.
+    return URL(fileURLWithPath: raw).standardizedFileURL.path
 }
 
 private func copyExecutablePath() -> String? {
